@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # Zone-Based Workforce Scheduler
 
 A web-based scheduling system for managing teams, workers, and resource allocation across different zones using a calendar interface.

@@ -3,21 +3,21 @@ import Sidebar from "./components/Sidebar";
 import CalendarView from "./components/CalendarView";
 import type { AppEvent } from "./types";
 
-// App is the ROOT component — it owns all the shared state and passes it
-// down to child components as props. This is the standard React pattern called
-// "lifting state up": if two sibling components need to share data, you move
-// the state to their nearest common parent (here, App).
 function App() {
-  // selectedMember: which worker the user has clicked in the sidebar
   const [selectedMember, setSelectedMember] = useState<string>("");
-
-  // events: the list of all scheduled assignments. Each event is shown as a
-  // coloured block on the calendar. We store them in App so both the Sidebar
-  // (which creates events) and CalendarView (which displays them) can access them.
   const [events, setEvents] = useState<AppEvent[]>([]);
 
-  // addEvent is called by Sidebar when the user clicks "Add".
-  // It builds a proper event object and appends it to the list.
+  // teamView: when true, the calendar shows ALL workers in the selected team
+  // instead of just the one selected worker.
+  // We lift this state to App because BOTH Sidebar (the button that flips it)
+  // and CalendarView (which uses it to filter events) need access to it.
+  const [teamView, setTeamView] = useState(false);
+
+  // teamMemberNames: the list of worker names belonging to the selected team.
+  // When the user switches teams or clears the selection, Sidebar tells App
+  // what names are in the current team so CalendarView can filter on them.
+  const [teamMemberNames, setTeamMemberNames] = useState<string[]>([]);
+
   const addEvent = (
     resourceName: string,
     workload: "light" | "heavy",
@@ -26,9 +26,6 @@ function App() {
     endTime: string
   ) => {
     if (!selectedMember || !date || !startTime || !endTime) return;
-
-    // FullCalendar needs ISO datetime strings for timed events:
-    // e.g. "2026-04-16T09:00:00"
     const newEvent: AppEvent = {
       id: `${Date.now()}`,
       title: `${selectedMember} — ${resourceName}`,
@@ -38,22 +35,26 @@ function App() {
       memberName: selectedMember,
       resourceName,
     };
-
     setEvents((prev) => [...prev, newEvent]);
   };
 
   return (
     <div className="app-layout">
-      {/* LEFT PANEL — member picker + resource assignment form */}
       <Sidebar
         selectedMember={selectedMember}
         onSelectMember={setSelectedMember}
         onAddEvent={addEvent}
         events={events}
+        teamView={teamView}
+        onToggleTeamView={setTeamView}
+        onTeamMembersChange={setTeamMemberNames}
       />
-
-      {/* RIGHT PANEL — the actual calendar grid */}
-      <CalendarView events={events} selectedMember={selectedMember} />
+      <CalendarView
+        events={events}
+        selectedMember={selectedMember}
+        teamView={teamView}
+        teamMemberNames={teamMemberNames}
+      />
     </div>
   );
 }

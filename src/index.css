@@ -335,6 +335,7 @@ body {
   border-radius: 10px;
   width: fit-content;
   color: #000;
+  --border:     #1e3a5f;
 }
 
 /* Scrollbar styling (webkit browsers — Chrome, Safari, Edge) */

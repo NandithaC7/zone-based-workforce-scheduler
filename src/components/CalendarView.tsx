@@ -1,27 +1,3 @@
-/* import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
-type Props = {
-  events: any[];
-};
-
-function CalendarView({ events }: Props) {
-  return (
-    <div>
-        <h3>Calendar</h3>
-        <FullCalendar
-        plugins={[dayGridPlugin, timeGridPlugin]}
-        initialView="timeGridWeek"
-        events={events}
-        height="80vh"
-        />
-    </div>
-  );
-}
-
-export default CalendarView;
-*/
-
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -32,13 +8,19 @@ import type { AppEvent } from "../types";
 type Props = {
   events: AppEvent[];
   selectedMember: string;
+  teamView: boolean;
+  teamMemberNames: string[];
 };
 
-function CalendarView({ events, selectedMember }: Props) {
-  const visibleEvents = selectedMember
+function CalendarView({ events, selectedMember, teamView, teamMemberNames }: Props) {
+  const visibleEvents = teamView
+    ? events.filter((e) => teamMemberNames.includes(e.memberName))
+    : selectedMember
     ? events.filter((e) => e.memberName === selectedMember)
     : events;
+  
   const calendarEvents = visibleEvents.map((e) => {
+    // Check if there are overlapping events for the same start time
     const overlaps = visibleEvents.filter(
       (other) => other.start === e.start && other.id !== e.id
     ).length > 0;
@@ -58,17 +40,29 @@ function CalendarView({ events, selectedMember }: Props) {
     };
   });
 
+  // ── DYNAMIC HEADER ────────────────────────────────────────────────────────
+  // Provides a clear, contextual title based on what data is being rendered
+  const headerTitle = teamView
+    ? ` Team View — ${teamMemberNames.length} workers`
+    : selectedMember
+    ? ` ${selectedMember}'s Schedule`
+    : "All Assignments";
+
+  const headerSub = teamView
+    ? "Showing all assignments across the selected team"
+    : selectedMember
+    ? "Showing calendar for selected worker"
+    : "";
+
   return (
     <main className="calendar-panel">
       <div className="calendar-header">
-        <h2 className="calendar-title">
-          {selectedMember
-            ? `${selectedMember}'s Schedule`
-            : "All Assignments"}
+        <h2 className={`calendar-title ${teamView ? "calendar-title--team" : ""}`}>
+          {headerTitle}
         </h2>
-        {selectedMember && (
+        {headerSub && (
           <span className="calendar-subtitle">
-            Showing calendar for selected worker
+            {headerSub}
           </span>
         )}
       </div>
@@ -84,7 +78,6 @@ function CalendarView({ events, selectedMember }: Props) {
             center: "title",
             right: "timeGridDay,timeGridWeek,dayGridMonth",
           }}
-
           events={calendarEvents}
           height="calc(100vh - 100px)"
           slotDuration="00:30:00"
